@@ -1,0 +1,59 @@
+import heapq
+
+def find_blank_square(state):
+    """Return the row and column of the blank square in the puzzle."""
+    for i in range(3):
+        for j in range(3):
+            if state[i][j] == 0:
+                return i, j
+
+def valid_moves(blank_row, blank_col):
+    """Return a list of valid moves given the location of the blank square."""
+    moves = []
+    if blank_row > 0:
+        moves.append((-1, 0))
+    if blank_col > 0:
+        moves.append((0, -1))
+    if blank_row < 2:
+        moves.append((1, 0))
+    if blank_col < 2:
+        moves.append((0, 1))
+    return moves
+
+def make_move(state, move):
+    """Return the state that results from making the given move."""
+    blank_row, blank_col = find_blank_square(state)
+    blank_row += move[0]
+    blank_col += move[1]
+    new_state = [[x for x in row] for row in state]
+    new_state[blank_row][blank_col], new_state[blank_row - move[0]][blank_col - move[1]] = new_state[blank_row - move[0]][blank_col - move[1]], new_state[blank_row][blank_col]
+    return new_state
+
+def h(state):
+    """Return the estimated distance to the goal state."""
+    distance = 0
+    for i in range(3):
+        for j in range(3):
+            goal_i, goal_j = divmod(state[i][j], 3)
+            distance += abs(goal_i - i) + abs(goal_j - j)
+    return distance
+
+def a_star(start, goal):
+    """Return a list of moves to reach the goal state from the start state."""
+    heap = [(h(start), 0, start, [])]
+    visited = set()
+    while heap:
+        _, cost, current, path = heapq.heappop(heap)
+        if current == goal:
+            return path
+        if tuple(map(tuple, current)) in visited:
+            continue
+        visited.add(tuple(map(tuple, current)))
+        blank_row, blank_col = find_blank_square(current)
+        for move in valid_moves(blank_row, blank_col):
+            new_state = make_move(current, move)
+            heapq.heappush(heap, (cost + 1 + h(new_state), cost + 1, new_state, path + [move]))
+
+start = [[1, 2, 3], [5, 6, 0], [7, 8, 4]]
+goal = [[1, 2, 3], [5, 8, 6], [0, 7, 4]]
+print(a_star(start, goal))
